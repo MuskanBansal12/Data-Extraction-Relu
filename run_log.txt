@@ -1,0 +1,88 @@
+﻿
+============================================================
+STEP 1 - OPENING DISNEY CRUISE
+============================================================
+Title: Cruises, Family Cruises & Disney Vacations | Disney Cruise Line
+URL: https://disneycruise.disney.go.com/en-in/
+No consent banner shown.
+
+============================================================
+STEP 2 - CLICKING VIEW DATES
+============================================================
+View Dates found.
+Filters: default search (2 adults, all destinations / dates / ships)
+
+============================================================
+STEP 3 - WAITING FOR CRUISE RESULTS
+============================================================
+Cruise results ready.
+Current URL: https://disneycruise.disney.go.com/en-in/cruises-destinations/list/
+Product cards currently visible: 5
+Result pages reported by site: 35
+Total sailings reported by site: 948
+
+============================================================
+STEP 4 - SCROLLING TO LOAD ALL RESULT PAGES
+============================================================
+Scroll 1: pages 2/35, cards 10
+Scroll 2: pages 4/35, cards 20
+Scroll 3: pages 5/35, cards 25
+Scroll 4: pages 7/35, cards 35
+Scroll 5: pages 9/35, cards 45
+Scroll 6: pages 11/35, cards 55
+Scroll 7: pages 12/35, cards 60
+Scroll 8: pages 14/35, cards 70
+Scroll 9: pages 16/35, cards 80
+Scroll 10: pages 18/35, cards 90
+Scroll 11: pages 19/35, cards 100
+Scroll 12: pages 21/35, cards 105
+Scroll 13: pages 23/35, cards 115
+Scroll 14: pages 24/35, cards 125
+Scroll 15: pages 26/35, cards 135
+Scroll 16: pages 28/35, cards 140
+Scroll 17: pages 30/35, cards 150
+Scroll 18: pages 31/35, cards 160
+Scroll 19: pages 33/35, cards 165
+Scroll 20: pages 35/35, cards 171
+All result pages loaded.
+Result pages loaded: 35
+Cruise cards loaded: 171
+
+============================================================
+STEP 4 - EXTRACTING CARD DATA
+============================================================
+Cards on page: 171
+Products from 35 API pages: 171
+Cards matched to API products by position.
+Records extracted: 171
+Raw data saved to disney_cruise_raw.json and disney_cruise_raw.csv
+
+============================================================
+STEP 5 - DATA CLEANING
+============================================================
+Records before cleaning: 171
+Dropped (missing location): 0
+Records before deduplication: 171
+Records after deduplication: 171
+Final clean records: 171
+
+============================================================
+STEP 6 - SAVING FINAL CSV
+============================================================
+CSV created: results.csv
+Total records: 171
+
+============================================================
+ANSWERS
+============================================================
+(i)   Cruises with Pacific as destination : 2
+(ii)  Total cruises (cards)               : 171  [948 individual sailing dates]
+(iii) Holiday cruises                     : 71  {'Very Merrytime': 44, 'Halloween on the High Seas': 27}
+(iv)  Cruises with more than 2 dates      : 67
+(v)   Departing from Miami                : 0
+      Departing from London               : 0
+      Departure ports on the site         : Fort Lauderdale (50), Port Canaveral (41), San Diego (29), Galveston (13), Southampton (10), San Juan (8), Vancouver (5), New York (5), Barcelona (4), Singapore (3), Civitavecchia (Rome) (3)
+
+Answers saved to answers.json
+
+Browser closed.

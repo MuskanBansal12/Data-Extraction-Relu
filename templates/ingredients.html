@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ingredients Network Results</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="topnav"><a href="/">Task 1 · Disney Cruises</a><a href="/ingredients" class="active">Task 2 · Ingredients Network</a></nav>
+
+  <header>
+    <h1>Ingredients Network: Supplier Directory</h1>
+    <p>Companies from the Search results on ingredientsnetwork.com, with every required field filled, cleaned and deduplicated.</p>
+    <div class="meta">
+      {{ answers.in_clean_csv.companies }} companies · {{ answers.alternatives.all_products_listed }} products listed
+      {% if answers.scraped_at %} · scraped {{ answers.scraped_at }}{% endif %}
+      · <a href="/download/task2/results.csv">Download results.csv</a>
+      · <a href="/download/task2/products.csv">Download products.csv</a>
+    </div>
+  </header>
+
+  <section>
+    <h2>Challenge answers</h2>
+    <div class="tiles">
+      <div class="tile">
+        <div class="q">(i) Total ingredients</div>
+        <div class="v">{{ answers.total_ingredients }}</div>
+        <div class="d">Products tagged with an Ingredients category ({{ answers.alternatives.all_products_listed }} products in total)</div>
+      </div>
+      <div class="tile">
+        <div class="q">(ii) Total finished products</div>
+        <div class="v">{{ answers.total_finished_products }}</div>
+        <div class="d">Products tagged with a Finished Products category</div>
+      </div>
+      <div class="tile">
+        <div class="q">(iii) Herbs &amp; spices</div>
+        <div class="v">{{ answers.companies_herbs_spices }}</div>
+        <div class="d">Companies under “Herbs, Spices”</div>
+      </div>
+      <div class="tile">
+        <div class="q">(iv) Physical delivery formats</div>
+        <div class="v">{{ answers.companies_physical_formats }}</div>
+        <div class="d">Companies under Delivery Formats › Physical Formats</div>
+      </div>
+      <div class="tile">
+        <div class="q">(v) Cognitive &amp; mental health</div>
+        <div class="v">{{ answers.companies_cognitive_mental_health }}</div>
+        <div class="d">Companies under Health &amp; Wellness</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Companies by country</h2>
+    {% set max_n = country_counts[0][1] if country_counts else 1 %}
+    <div class="bars" id="bars">
+      {% for country, n in country_counts %}
+        <div class="label">{{ country }}</div>
+        <div class="track" data-tip="{{ country }}: {{ n }} compan{{ 'ies' if n != 1 else 'y' }}">
+          <div class="fill" style="width: {{ (n / max_n * 100)|round(1) }}%"></div>
+        </div>
+        <div class="val">{{ n }}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>All companies</h2>
+    <div class="filters">
+      <input id="q" type="search" placeholder="Search name, category, market…" aria-label="Search">
+      <select id="f-country" aria-label="Country"><option value="">All countries</option></select>
+      <select id="f-activity" aria-label="Primary business activity"><option value="">All business activities</option></select>
+      <select id="f-health" aria-label="Health and wellness"><option value="">All health areas</option></select>
+      <button class="btn" id="reset" type="button">Reset</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr id="head"></tr></thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+  const ROWS = {{ companies|tojson }};
+
+  const COLUMNS = [
+    { key: "Company Name", label: "Company", cls: "name" },
+    { key: "Company Description", label: "Description", cls: "desc", clip: 220 },
+    { key: "Primary Business Activity", label: "Business Activity", cls: "wide" },
+    { key: "Sales Markets", label: "Sales Markets", cls: "wide" },
+    { key: "Categories", label: "Categories", cls: "desc", clip: 260 },
+    { key: "Events", label: "Events", cls: "wide", clip: 200 },
+    { key: "Address", label: "Address", cls: "wide" },
+    { key: "Email", label: "Email", link: v => "mailto:" + v },
+    { key: "Telephone", label: "Telephone", cls: "nowrap" },
+    { key: "Website", label: "Website", link: v => v },
+  ];
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  let sort = { key: "Company Name", dir: 1 };
+
+  const head = document.getElementById("head");
+  COLUMNS.forEach(col => {
+    const th = document.createElement("th");
+    th.textContent = col.label;
+    th.dataset.key = col.key;
+    th.addEventListener("click", () => {
+      sort = { key: col.key, dir: sort.key === col.key ? -sort.dir : 1 };
+      render();
+    });
+    head.appendChild(th);
+  });
+
+  function fillSelect(id, values) {
+    const sel = document.getElementById(id);
+    [...new Set(values.filter(Boolean))].sort().forEach(v => {
+      const o = document.createElement("option");
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+  }
+  const split = s => s.split(/\s*[|;]\s*/).filter(x => x && x !== "None listed");
+  fillSelect("f-country", ROWS.map(r => r["Country"]));
+  fillSelect("f-activity", ROWS.flatMap(r => split(r["Primary Business Activity"])));
+  fillSelect("f-health", ROWS.flatMap(r => split(r["Health & Wellness"])));
+
+  const q = document.getElementById("q");
+  const fCountry = document.getElementById("f-country");
+  const fActivity = document.getElementById("f-activity");
+  const fHealth = document.getElementById("f-health");
+  [q, fCountry, fActivity, fHealth].forEach(el => el.addEventListener("input", render));
+  document.getElementById("reset").addEventListener("click", () => {
+    q.value = ""; fCountry.value = ""; fActivity.value = ""; fHealth.value = "";
+    sort = { key: "Company Name", dir: 1 };
+    render();
+  });
+
+  function render() {
+    const term = q.value.trim().toLowerCase();
+    const rows = ROWS.filter(r =>
+      (!fCountry.value || r["Country"] === fCountry.value) &&
+      (!fActivity.value || split(r["Primary Business Activity"]).includes(fActivity.value)) &&
+      (!fHealth.value || split(r["Health & Wellness"]).includes(fHealth.value)) &&
+      (!term || Object.values(r).join(" ").toLowerCase().includes(term))
+    );
+
+    rows.sort((a, b) => String(a[sort.key]).localeCompare(String(b[sort.key])) * sort.dir);
+
+    head.querySelectorAll("th").forEach(th => {
+      th.setAttribute("aria-sort", th.dataset.key === sort.key ? (sort.dir === 1 ? "ascending" : "descending") : "none");
+    });
+
+    document.getElementById("body").innerHTML = rows.map(r => "<tr>" + COLUMNS.map(c => {
+      const raw = String(r[c.key] ?? "");
+      const shown = c.clip && raw.length > c.clip ? raw.slice(0, c.clip).trimEnd() + "…" : raw;
+      const title = c.clip && raw.length > c.clip ? ` title="${esc(raw)}"` : "";
+      const body = c.link ? `<a href="${esc(c.link(raw))}" target="_blank" rel="noopener">${esc(shown)}</a>` : esc(shown);
+      return `<td class="${c.cls || ""}"${title}>${body}</td>`;
+    }).join("") + "</tr>").join("");
+
+    document.getElementById("count").textContent = `${rows.length} of ${ROWS.length} companies`;
+  }
+  render();
+
+  const tip = document.getElementById("tip");
+  document.querySelectorAll("#bars .track").forEach(t => {
+    t.addEventListener("mousemove", e => {
+      tip.textContent = t.dataset.tip;
+      tip.style.display = "block";
+      tip.style.left = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8) + "px";
+      tip.style.top = (e.clientY - 34) + "px";
+    });
+    t.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+  });
+</script>
+</body>
+</html>

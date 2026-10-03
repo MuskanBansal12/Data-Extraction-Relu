@@ -1,0 +1,78 @@
+﻿
+============================================================
+STEP 1 - OPENING INGREDIENTS NETWORK
+============================================================
+Title: Ingredients Network
+No cookie banner shown.
+
+============================================================
+STEP 2 - CLICKING SEARCH
+============================================================
+
+============================================================
+STEP 3 - WAITING FOR RESULT CARDS
+============================================================
+Results page: https://www.ingredientsnetwork.com/live/search/searchresults46v2.jsp?site=47&SugType_val=&RecordId_val=&searchtype=all&name=
+Cards on first page: 3
+Search index: 3962 results
+By type: {'company': 185, 'product': 3777}
+
+============================================================
+STEP 4 - EXTRACTING COMPANY DATA
+============================================================
+Companies in index: 185
+Already cached: 0, to fetch: 185
+  185/185 companies (4.0/s)
+Company records extracted: 185
+Raw (pre-cleaning) data saved to task2\companies_raw.csv
+
+============================================================
+STEP 5 - DATA CLEANING
+============================================================
+Records before cleaning: 185
+Dropped for a missing required field: 109
+   missing Telephone: 61
+   missing Sales Markets: 53
+   missing Website: 40
+   missing Primary Business Activity: 39
+   missing Email: 38
+   missing Categories: 12
+   missing Events: 3
+Records before deduplication: 76
+Records after deduplication: 76
+Final clean records: 76
+
+============================================================
+STEP 6 - SAVING FINAL CSV
+============================================================
+CSV created: task2\results.csv
+Total records: 76
+
+============================================================
+STEP 4b - EXTRACTING PRODUCT CARDS
+============================================================
+  500/3777 products
+  1000/3777 products
+  1500/3777 products
+  2000/3777 products
+  2500/3777 products
+  3000/3777 products
+  3500/3777 products
+Products saved: 3777 -> task2\products.csv
+
+============================================================
+ANSWERS
+============================================================
+(i)   Total ingredients (ingredient products)      : 2575
+      [3777 products listed in total, 538 ingredient categories]
+(ii)  Total finished products                      : 766
+      [33 finished-product categories]
+(iii) Companies with Herbs, Spices                 : 22
+(iv)  Companies with Physical delivery formats     : 55
+(v)   Companies in Cognitive & Mental Health       : 47
+
+Within the 76 complete records in results.csv: herbs/spices 13, physical formats 39, cognitive & mental health 18
+
+Answers saved to task2\answers.json
+
+Done.

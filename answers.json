@@ -1,0 +1,29 @@
+{
+  "pacific_cruises": 2,
+  "total_cruises": 171,
+  "total_sailings": 948,
+  "site_reported_sailings": 948,
+  "holiday_cruises": 71,
+  "holiday_by_theme": {
+    "Very Merrytime": 44,
+    "Halloween on the High Seas": 27
+  },
+  "cruises_with_more_than_2_dates": 67,
+  "miami_departures": 0,
+  "london_departures": 0,
+  "departure_ports": {
+    "Fort Lauderdale": 50,
+    "Port Canaveral": 41,
+    "San Diego": 29,
+    "Galveston": 13,
+    "Southampton": 10,
+    "San Juan": 8,
+    "Vancouver": 5,
+    "New York": 5,
+    "Barcelona": 4,
+    "Singapore": 3,
+    "Civitavecchia (Rome)": 3
+  },
+  "pages_loaded": 35,
+  "scraped_at": "2026-10-03 17:30:03"
+}

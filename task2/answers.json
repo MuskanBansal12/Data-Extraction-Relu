@@ -1,0 +1,22 @@
+{
+  "total_ingredients": 2575,
+  "total_finished_products": 766,
+  "companies_herbs_spices": 22,
+  "companies_physical_formats": 55,
+  "companies_cognitive_mental_health": 47,
+  "alternatives": {
+    "all_products_listed": 3777,
+    "all_companies_listed": 185,
+    "ingredient_categories_on_site": 538,
+    "finished_product_categories_on_site": 33,
+    "companies_tagged_any_ingredient": 154,
+    "companies_tagged_any_finished_product": 145
+  },
+  "in_clean_csv": {
+    "companies": 76,
+    "herbs_spices": 13,
+    "physical_formats": 39,
+    "cognitive_mental_health": 18
+  },
+  "scraped_at": "2026-10-03 17:35:11"
+}

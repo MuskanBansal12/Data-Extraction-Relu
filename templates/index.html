@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Disney Cruise Results</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="topnav"><a href="/" class="active">Task 1 · Disney Cruises</a><a href="/ingredients">Task 2 · Ingredients Network</a></nav>
+
+  <header>
+    <h1>Disney Cruise Line: Scraped Results</h1>
+    <p>Every cruise card from the “View Dates” search on disneycruise.disney.go.com/en-in, cleaned and deduplicated.</p>
+    <div class="meta">
+      {{ answers.pages_loaded }} result pages · {{ answers.total_cruises }} cruises · {{ answers.total_sailings }} sailing dates
+      {% if answers.scraped_at %} · scraped {{ answers.scraped_at }}{% endif %}
+      · <a href="/download/results.csv">Download results.csv</a>
+    </div>
+  </header>
+
+  <section>
+    <h2>Challenge answers</h2>
+    <div class="tiles">
+      <div class="tile">
+        <div class="q">(i) Pacific destination</div>
+        <div class="v">{{ answers.pacific_cruises }}</div>
+        <div class="d">Pacific Coast cruises (San Diego ↔ Vancouver)</div>
+      </div>
+      <div class="tile">
+        <div class="q">(ii) Total cruises</div>
+        <div class="v">{{ answers.total_cruises }}</div>
+        <div class="d">{{ answers.total_sailings }} individual sailing dates</div>
+      </div>
+      <div class="tile">
+        <div class="q">(iii) Holiday cruises</div>
+        <div class="v">{{ answers.holiday_cruises }}</div>
+        <div class="d">
+          {% for theme, n in answers.holiday_by_theme.items() %}{{ theme }}: {{ n }}{% if not loop.last %} · {% endif %}{% endfor %}
+        </div>
+      </div>
+      <div class="tile">
+        <div class="q">(iv) More than 2 dates</div>
+        <div class="v">{{ answers.cruises_with_more_than_2_dates }}</div>
+        <div class="d">Cruises with 3+ bookable dates</div>
+      </div>
+      <div class="tile">
+        <div class="q">(v) Miami / London departures</div>
+        <div class="v">{{ answers.miami_departures }} / {{ answers.london_departures }}</div>
+        <div class="d">Neither is a departure port on the site; UK sailings leave from Southampton</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Cruises by departure port</h2>
+    {% set max_n = port_counts[0][1] if port_counts else 1 %}
+    <div class="bars" id="bars">
+      {% for port, n in port_counts %}
+        <div class="label">{{ port }}</div>
+        <div class="track" data-tip="{{ port }}: {{ n }} cruise{{ 's' if n != 1 }}">
+          <div class="fill" style="width: {{ (n / max_n * 100)|round(1) }}%"></div>
+        </div>
+        <div class="val">{{ n }}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>All cruises</h2>
+    <div class="filters">
+      <input id="q" type="search" placeholder="Search name, port, ship…" aria-label="Search">
+      <select id="f-port" aria-label="Departure port"><option value="">All departure ports</option></select>
+      <select id="f-region" aria-label="Destination region"><option value="">All regions</option></select>
+      <select id="f-holiday" aria-label="Holiday theme"><option value="">All themes</option></select>
+      <button class="btn" id="reset" type="button">Reset</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr id="head"></tr></thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+  const CRUISES = {{ cruises|tojson }};
+
+  const COLUMNS = [
+    { key: "Card No", label: "#", num: true },
+    { key: "Cruise Name", label: "Cruise", cls: "name" },
+    { key: "Ship", label: "Ship" },
+    { key: "Duration", label: "Duration", cls: "nowrap", sortKey: r => parseInt(r["Duration"]) || 0 },
+    { key: "Departing From", label: "Departing From" },
+    { key: "Ending In", label: "Ending In" },
+    { key: "Sailing To", label: "Sailing To" },
+    { key: "Destination Region", label: "Region" },
+    { key: "Price From (INR)", label: "Price From (INR)", num: true, sortKey: r => toNumber(r["Price From (INR)"]) },
+    { key: "Price From (USD)", label: "Price From (USD)", num: true, sortKey: r => toNumber(r["Price From (USD)"]) },
+    { key: "Number of Dates", label: "Dates", num: true },
+    { key: "Page", label: "Page", num: true },
+  ];
+
+  function toNumber(s) { return parseFloat(String(s).replace(/[^\d.]/g, "")) || 0; }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  let sort = { key: "Card No", dir: 1 };
+
+  // Header
+  const head = document.getElementById("head");
+  COLUMNS.forEach(col => {
+    const th = document.createElement("th");
+    th.textContent = col.label;
+    th.dataset.key = col.key;
+    if (col.num) th.style.textAlign = "right";
+    th.addEventListener("click", () => {
+      sort = { key: col.key, dir: sort.key === col.key ? -sort.dir : 1 };
+      render();
+    });
+    head.appendChild(th);
+  });
+
+  // Filter options
+  function fillSelect(id, values) {
+    const sel = document.getElementById(id);
+    [...new Set(values)].sort().forEach(v => {
+      const o = document.createElement("option");
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+  }
+  fillSelect("f-port", CRUISES.map(r => r["Departing From"]));
+  fillSelect("f-region", CRUISES.map(r => r["Destination Region"]));
+  fillSelect("f-holiday", CRUISES.map(r => r["Holiday Theme"]));
+
+  const q = document.getElementById("q");
+  const fPort = document.getElementById("f-port");
+  const fRegion = document.getElementById("f-region");
+  const fHoliday = document.getElementById("f-holiday");
+  [q, fPort, fRegion, fHoliday].forEach(el => el.addEventListener("input", render));
+  document.getElementById("reset").addEventListener("click", () => {
+    q.value = ""; fPort.value = ""; fRegion.value = ""; fHoliday.value = "";
+    sort = { key: "Card No", dir: 1 };
+    render();
+  });
+
+  function render() {
+    const term = q.value.trim().toLowerCase();
+    let rows = CRUISES.filter(r =>
+      (!fPort.value || r["Departing From"] === fPort.value) &&
+      (!fRegion.value || r["Destination Region"] === fRegion.value) &&
+      (!fHoliday.value || r["Holiday Theme"] === fHoliday.value) &&
+      (!term || Object.values(r).join(" ").toLowerCase().includes(term))
+    );
+
+    const col = COLUMNS.find(c => c.key === sort.key);
+    const keyFn = col.sortKey || (r => r[col.key]);
+    rows.sort((a, b) => {
+      const x = keyFn(a), y = keyFn(b);
+      return (typeof x === "number" ? x - y : String(x).localeCompare(String(y))) * sort.dir;
+    });
+
+    head.querySelectorAll("th").forEach(th => {
+      th.setAttribute("aria-sort", th.dataset.key === sort.key ? (sort.dir === 1 ? "ascending" : "descending") : "none");
+    });
+
+    document.getElementById("body").innerHTML = rows.map(r => {
+      const tags = [r["Cruise Tags"], r["Offer"]]
+        .flatMap(s => s.split(" | "))
+        .filter(t => t && t !== "No Tags" && t !== "No Special Offer")
+        .map(t => `<span class="chip">${esc(t)}</span>`).join("");
+      return "<tr>" + COLUMNS.map(c => {
+        const v = esc(r[c.key]);
+        const cls = [c.num ? "num" : "", c.cls || ""].join(" ").trim();
+        if (c.key === "Cruise Name") return `<td class="${cls}">${v}<div>${tags}</div></td>`;
+        if (c.key === "Sailing To" && r[c.key].startsWith("Days at Sea")) return `<td class="muted">${v}</td>`;
+        return `<td class="${cls}">${v}</td>`;
+      }).join("") + "</tr>";
+    }).join("");
+
+    document.getElementById("count").textContent = `${rows.length} of ${CRUISES.length} cruises`;
+  }
+  render();
+
+  // Bar tooltips
+  const tip = document.getElementById("tip");
+  document.querySelectorAll("#bars .track").forEach(t => {
+    t.addEventListener("mousemove", e => {
+      tip.textContent = t.dataset.tip;
+      tip.style.display = "block";
+      tip.style.left = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8) + "px";
+      tip.style.top = (e.clientY - 34) + "px";
+    });
+    t.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+  });
+</script>
+</body>
+</html>
